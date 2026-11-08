@@ -1,0 +1,134 @@
+{
+  "info": {
+    "_postman_id": "c82b494e-a3cd-40c8-8ba2-45ef2c1e37c1",
+    "name": "TaskFlow API",
+    "description": "Проверка регистрации, JWT, задач, профиля и административного доступа TaskFlow.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8000" },
+    { "key": "username", "value": "student" },
+    { "key": "password", "value": "StrongPassword!2026" },
+    { "key": "adminUsername", "value": "admin" },
+    { "key": "adminPassword", "value": "change-this-admin-password" },
+    { "key": "access", "value": "" },
+    { "key": "refresh", "value": "" },
+    { "key": "adminAccess", "value": "" },
+    { "key": "taskId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "request": { "method": "GET", "url": "{{baseUrl}}/api/health/" }
+    },
+    {
+      "name": "Register",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\"username\":\"{{username}}\",\"email\":\"student@example.com\",\"password\":\"{{password}}\"}", "options": { "raw": { "language": "json" } } },
+        "url": "{{baseUrl}}/api/auth/register/"
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Registration returns created', function () { pm.response.to.have.status(201); });", "pm.test('Password is not exposed', function () { pm.expect(pm.response.json()).not.to.have.property('password'); });"] } }]
+    },
+    {
+      "name": "Login — save JWT",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\"username\":\"{{username}}\",\"password\":\"{{password}}\"}", "options": { "raw": { "language": "json" } } },
+        "url": "{{baseUrl}}/api/auth/token/"
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('JWT pair returned', function () { pm.response.to.have.status(200); });", "const body = pm.response.json();", "pm.collectionVariables.set('access', body.access);", "pm.collectionVariables.set('refresh', body.refresh);"] } }]
+    },
+    {
+      "name": "Refresh JWT",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\"refresh\":\"{{refresh}}\"}", "options": { "raw": { "language": "json" } } },
+        "url": "{{baseUrl}}/api/auth/token/refresh/"
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Access token refreshed', function () { pm.response.to.have.status(200); });", "pm.collectionVariables.set('access', pm.response.json().access);"] } }]
+    },
+    {
+      "name": "Profile",
+      "request": {
+        "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access}}", "type": "string" }] },
+        "method": "GET",
+        "url": "{{baseUrl}}/api/auth/profile/"
+      }
+    },
+    {
+      "name": "Create task — save taskId",
+      "request": {
+        "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access}}", "type": "string" }] },
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\"title\":\"Подготовить отчёт\",\"description\":\"Задача из Postman\",\"status\":\"pending\",\"priority\":\"medium\"}", "options": { "raw": { "language": "json" } } },
+        "url": "{{baseUrl}}/api/tasks/"
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Task created', function () { pm.response.to.have.status(201); });", "pm.collectionVariables.set('taskId', pm.response.json().id);"] } }]
+    },
+    {
+      "name": "List own tasks",
+      "request": {
+        "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access}}", "type": "string" }] },
+        "method": "GET",
+        "url": "{{baseUrl}}/api/tasks/"
+      }
+    },
+    {
+      "name": "Filter tasks",
+      "request": {
+        "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access}}", "type": "string" }] },
+        "method": "GET",
+        "url": "{{baseUrl}}/api/tasks/?priority=medium&search=отчёт"
+      }
+    },
+    {
+      "name": "Get task",
+      "request": {
+        "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access}}", "type": "string" }] },
+        "method": "GET",
+        "url": "{{baseUrl}}/api/tasks/{{taskId}}/"
+      }
+    },
+    {
+      "name": "Update task",
+      "request": {
+        "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access}}", "type": "string" }] },
+        "method": "PATCH",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\"status\":\"in_progress\"}", "options": { "raw": { "language": "json" } } },
+        "url": "{{baseUrl}}/api/tasks/{{taskId}}/"
+      }
+    },
+    {
+      "name": "Delete task",
+      "request": {
+        "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access}}", "type": "string" }] },
+        "method": "DELETE",
+        "url": "{{baseUrl}}/api/tasks/{{taskId}}/"
+      }
+    },
+    {
+      "name": "Admin Login — save JWT",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\"username\":\"{{adminUsername}}\",\"password\":\"{{adminPassword}}\"}", "options": { "raw": { "language": "json" } } },
+        "url": "{{baseUrl}}/api/auth/token/"
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Admin JWT pair returned', function () { pm.response.to.have.status(200); });", "pm.collectionVariables.set('adminAccess', pm.response.json().access);"] } }]
+    },
+    {
+      "name": "Admin — list users",
+      "request": {
+        "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminAccess}}", "type": "string" }] },
+        "method": "GET",
+        "url": "{{baseUrl}}/api/users/"
+      }
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{% load static %}
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f8fa">
+  <title>TaskFlow — управление задачами</title>
+  <link rel="stylesheet" href="{% static 'tasks/app.css' %}">
+</head>
+<body>
+  <div id="app" class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="#/dashboard"><span class="brand-mark">T</span><span>taskflow</span></a>
+      <div id="sidebar-content"></div>
+      <div id="sidebar-user" class="sidebar-user"></div>
+    </aside>
+    <main class="main">
+      <header class="topbar">
+        <div><span class="eyebrow">WORKSPACE</span><span id="topbar-title">TaskFlow</span></div>
+        <div id="topbar-actions"></div>
+      </header>
+      <section id="page" class="page" aria-live="polite"></section>
+    </main>
+  </div>
+  <div id="toast" class="toast" role="status"></div>
+  <script src="{% static 'tasks/app.js' %}" defer></script>
+</body>
+</html>
